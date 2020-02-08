@@ -77,7 +77,7 @@ export default {
             {
               id: 104,
               authName: "用户信息",
-              path: null,
+              path: "UserInfo",
               pid: 101
             }
           ]
@@ -99,11 +99,18 @@ export default {
     logout() {},
     toggleCollapse() {
       this.isCollapse = !this.isCollapse;
+    },
+    // 保存链接的激活状态
+    saveNavState(activePath) {
+      window.sessionStorage.setItem('activePath', activePath)
+      this.activePath = activePath
     }
   }
 };
 </script>
 <style lang="less" scoped>
+
+
 .home-container {
   height: 100%;
 }
@@ -125,7 +132,15 @@ export default {
 }
 
 .el-aside {
+   display: block;
+  left: 0;
+  top: 70px;
+  bottom: 0;
+  overflow-y: scroll;
   background-color: #333744;
+  .el-menu {
+    border-right: none;
+  }
 }
 
 .el-main {

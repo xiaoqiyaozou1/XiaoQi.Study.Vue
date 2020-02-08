@@ -9,6 +9,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 Vue.use(ElementUI)
 
 
+import './assets/global.css'
 import less from 'less'
 Vue.use(less)
 
@@ -40,3 +41,4 @@ new Vue({
   // components: { App },
   // template: '<App/>'
 })
+
