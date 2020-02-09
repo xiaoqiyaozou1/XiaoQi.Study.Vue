@@ -72,17 +72,14 @@
     <el-dialog title="添加用户" :visible.sync="addDialogVisible" width="50%" @close="addDialogClosed">
       <!-- 内容主体区域 -->
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="70px">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="addForm.username"></el-input>
+        <el-form-item label="用户名" prop="name">
+          <el-input v-model="addForm.name"></el-input>
         </el-form-item>
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="addForm.password"></el-input>
+        <el-form-item label="账号" prop="count">
+          <el-input v-model="addForm.count"></el-input>
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="addForm.email"></el-input>
-        </el-form-item>
-        <el-form-item label="手机" prop="mobile">
-          <el-input v-model="addForm.mobile"></el-input>
+        <el-form-item label="密码" prop="pwd">
+          <el-input v-model="addForm.pwd"></el-input>
         </el-form-item>
       </el-form>
       <!-- 底部区域 -->
@@ -174,7 +171,7 @@ export default {
       queryInfo: {
         query: "",
         // 当前的页数
-        pagenum: 1,
+        pageIndex: 1,
         // 当前每页显示多少条数据
         pagesize: 2
       },
@@ -184,14 +181,13 @@ export default {
       addDialogVisible: false,
       // 添加用户的表单数据
       addForm: {
-        username: "",
-        password: "",
-        email: "",
-        mobile: ""
+        name: "",
+        count: "",
+        pwd: ""
       },
       // 添加表单的验证规则对象
       addFormRules: {
-        username: [
+        name: [
           { required: true, message: "请输入用户名", trigger: "blur" },
           {
             min: 3,
@@ -200,7 +196,7 @@ export default {
             trigger: "blur"
           }
         ],
-        password: [
+        pwd: [
           { required: true, message: "请输入密码", trigger: "blur" },
           {
             min: 6,
@@ -209,14 +205,19 @@ export default {
             trigger: "blur"
           }
         ],
-        email: [
-          { required: true, message: "请输入邮箱", trigger: "blur" },
-          { validator: checkEmail, trigger: "blur" }
-        ],
-        mobile: [
-          { required: true, message: "请输入手机号", trigger: "blur" },
-          { validator: checkMobile, trigger: "blur" }
+        count: [
+          { required: true, message: "请输入账号", trigger: "blur" },
+          {
+            min: 6,
+            max: 15,
+            message: "用户名的长度在6~15个字符之间",
+            trigger: "blur"
+          }
         ]
+        // mobile: [
+        //   { required: true, message: "请输入手机号", trigger: "blur" },
+        //   { validator: checkMobile, trigger: "blur" }
+        // ]
       },
       // 控制修改用户对话框的显示与隐藏
       editDialogVisible: false,
@@ -247,22 +248,20 @@ export default {
     this.getUserList();
   },
   methods: {
+    //得到用户的信息
     async getUserList() {
-      //   const { data: res } = await this.$http.get("users", {
-      //     params: this.queryInfo
-      //   });
-      //   if (res.meta.status !== 200) {
-      //     return this.$message.error("获取用户列表失败！");
-      //   }
-      //   this.userlist = res.data.users;
-      //   this.total = res.data.total;
-      const data = await this.$http.get("Manager/GetUserInfos");
-
+      const data = await this.$http.get("Manager/GetUserInfoByQueryInfo", {
+        params: {
+          pageSize: this.queryInfo.pagesize,
+          pageIndex: this.queryInfo.pageIndex
+        }
+      });
       console.log(data);
       if (data.status !== 200) {
         return this.$message.error("获取用户列表失败！");
       }
-      this.userlist = data.data;
+      this.userlist = data.data.pageData;
+      this.total = data.data.total;
     },
     // 监听 pagesize 改变的事件
     handleSizeChange(newSize) {
@@ -273,7 +272,7 @@ export default {
     // 监听 页码值 改变的事件
     handleCurrentChange(newPage) {
       console.log(newPage);
-      this.queryInfo.pagenum = newPage;
+      this.queryInfo.pageIndex = newPage;
       this.getUserList();
     },
     // 监听 switch 开关状态的改变
@@ -297,14 +296,14 @@ export default {
       this.$refs.addFormRef.validate(async valid => {
         if (!valid) return;
         // 可以发起添加用户的网络请求
-        const { data: res } = await this.$http.post("users", this.addForm);
-
-        if (res.meta.status !== 201) {
+        const data = await this.$http.post("Manager/AddUserInfo", this.addForm);
+        console.log(data);
+        if (data.data !== true) {
           this.$message.error("添加用户失败！");
         }
 
         this.$message.success("添加用户成功！");
-        // 隐藏添加用户的对话框
+        // // 隐藏添加用户的对话框
         this.addDialogVisible = false;
         // 重新获取用户列表数据
         this.getUserList();
