@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import HelloWorld from '@/components/HelloWorld'
 import Home from '@/Home'
 import UserInfo from '@/components/UserInfo/UserInfo'
+import RoleInfo from '@/components/Right/RoleInfo'
 Vue.use(Router)
 
 export default new Router({
@@ -14,13 +15,16 @@ export default new Router({
       component:Home,
       redirect: '/HelloWorld',
       children: [
-        { path: '/UserInfo', component: UserInfo },
         {
           path: '/',
           name: 'HelloWorld',
           component: HelloWorld,
         
-        },]
+        },
+        { path: '/UserInfo', component: UserInfo },
+        { path: '/RoleInfo', component: RoleInfo }
+
+     ]
     }
   ]
 })

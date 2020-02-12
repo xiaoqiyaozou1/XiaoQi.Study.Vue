@@ -79,6 +79,12 @@ export default {
               authName: "用户信息",
               path: "UserInfo",
               pid: 101
+            },
+             {
+              id: 103,
+              authName: "角色信息",
+              path: "RoleInfo",
+              pid: 101
             }
           ]
         }

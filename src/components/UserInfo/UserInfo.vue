@@ -92,14 +92,14 @@
     <!-- 修改用户的对话框 -->
     <el-dialog title="修改用户" :visible.sync="editDialogVisible" width="50%" @close="editDialogClosed">
       <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" label-width="70px">
-        <el-form-item label="用户名">
-          <el-input v-model="editForm.username" disabled></el-input>
+        <el-form-item label="用户名" prop="name">
+          <el-input v-model="editForm.name"></el-input>
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="editForm.email"></el-input>
+        <el-form-item label="账号">
+          <el-input v-model="editForm.count" disabled></el-input>
         </el-form-item>
-        <el-form-item label="手机" prop="mobile">
-          <el-input v-model="editForm.mobile"></el-input>
+        <el-form-item label="密码" prop="pwd">
+          <el-input v-model="editForm.pwd"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -225,13 +225,23 @@ export default {
       editForm: {},
       // 修改表单的验证规则对象
       editFormRules: {
-        email: [
-          { required: true, message: "请输入用户邮箱", trigger: "blur" },
-          { validator: checkEmail, trigger: "blur" }
+        name: [
+          { required: true, message: "请输入用户名", trigger: "blur" },
+          {
+            min: 3,
+            max: 10,
+            message: "用户名的长度在3~10个字符之间",
+            trigger: "blur"
+          }
         ],
-        mobile: [
-          { required: true, message: "请输入用户手机", trigger: "blur" },
-          { validator: checkMobile, trigger: "blur" }
+        pwd: [
+          { required: true, message: "请输入密码", trigger: "blur" },
+          {
+            min: 6,
+            max: 15,
+            message: "用户名的长度在6~15个字符之间",
+            trigger: "blur"
+          }
         ]
       },
       // 控制分配角色对话框的显示与隐藏
@@ -275,18 +285,6 @@ export default {
       this.queryInfo.pageIndex = newPage;
       this.getUserList();
     },
-    // 监听 switch 开关状态的改变
-    async userStateChanged(userinfo) {
-      console.log(userinfo);
-      const { data: res } = await this.$http.put(
-        `users/${userinfo.id}/state/${userinfo.mg_state}`
-      );
-      if (res.meta.status !== 200) {
-        userinfo.mg_state = !userinfo.mg_state;
-        return this.$message.error("更新用户状态失败！");
-      }
-      this.$message.success("更新用户状态成功！");
-    },
     // 监听添加用户对话框的关闭事件
     addDialogClosed() {
       this.$refs.addFormRef.resetFields();
@@ -311,14 +309,18 @@ export default {
     },
     // 展示编辑用户的对话框
     async showEditDialog(id) {
-      // console.log(id)
-      const { data: res } = await this.$http.get("users/" + id);
+      console.log(id);
+      const data = await this.$http.get("Manager/GetUserByUserId", {
+        params: {
+          userId: id
+        }
+      });
 
-      if (res.meta.status !== 200) {
+      if (data.status !== 200) {
         return this.$message.error("查询用户信息失败！");
       }
 
-      this.editForm = res.data;
+      this.editForm = data.data.userInfo;
       this.editDialogVisible = true;
     },
     // 监听修改用户对话框的关闭事件
@@ -330,15 +332,12 @@ export default {
       this.$refs.editFormRef.validate(async valid => {
         if (!valid) return;
         // 发起修改用户信息的数据请求
-        const { data: res } = await this.$http.put(
-          "users/" + this.editForm.id,
-          {
-            email: this.editForm.email,
-            mobile: this.editForm.mobile
-          }
+        const data = await this.$http.put(
+          "Manager/UpdateUserInfo",
+          this.editForm
         );
 
-        if (res.meta.status !== 200) {
+        if (data.status !== 200) {
           return this.$message.error("更新用户信息失败！");
         }
 
@@ -370,9 +369,13 @@ export default {
         return this.$message.info("已取消删除");
       }
 
-      const { data: res } = await this.$http.delete("users/" + id);
+      const data = await this.$http.delete("Manager/DeleteUserInfo",{
+        params:{
+          userId:id
+        }
+      });
 
-      if (res.meta.status !== 200) {
+      if (data.status !== 200) {
         return this.$message.error("删除用户失败！");
       }
 
