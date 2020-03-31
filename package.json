@@ -1,5 +1,5 @@
 {
-  "name": "system_manager_ui",
+  "name": "xiaoqi.study.vue",
   "version": "1.0.0",
   "description": "A Vue.js project",
   "author": "xiaoqiyaozou1 <642310896@qq.com>",
@@ -10,10 +10,17 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "async-validator": "^3.2.3",
     "axios": "^0.19.2",
+    "babel-polyfill": "^6.26.0",
+    "deepmerge": "^4.2.2",
     "element-ui": "^2.13.0",
     "less": "^3.10.3",
     "less-loader": "^5.0.0",
+    "normalize-wheel": "^1.0.1",
+    "oidc-client": "^1.10.1",
+    "resize-observer-polyfill": "^1.5.1",
+    "throttle-debounce": "^2.1.0",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
   },

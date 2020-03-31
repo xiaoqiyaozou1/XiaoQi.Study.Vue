@@ -26,7 +26,7 @@
         <el-table-column type="index"></el-table-column>
         <el-table-column label="姓名" prop="name"></el-table-column>
         <el-table-column label="账号" prop="count"></el-table-column>
-        <el-table-column label="角色" prop="_RoleInfo.Role"></el-table-column>
+        <el-table-column label="角色" prop="_RoleInfo.des"></el-table-column>
         <el-table-column label="操作" width="220px">
           <template slot-scope="scope">
             <!-- 修改按钮 -->
@@ -116,16 +116,17 @@
       @close="setRoleDialogClosed"
     >
       <div>
-        <p>当前的用户：{{userInfo.username}}</p>
-        <p>当前的角色：{{userInfo.role_name}}</p>
+        <p>当前的用户：{{userInfo.name}}</p>
+        <p v-if="userInfo._RoleInfo">当前的角色：{{userInfo._RoleInfo.des}}</p>
+        <p v-else>当前的角色：</p>
         <p>
           分配新角色：
           <el-select v-model="selectedRoleId" placeholder="请选择">
             <el-option
               v-for="item in rolesList"
-              :key="item.id"
-              :label="item.roleName"
-              :value="item.id"
+              :key="item.roleId"
+              :label="item.des"
+              :value="item.roleId"
             ></el-option>
           </el-select>
         </p>
@@ -136,7 +137,7 @@
       </span>
     </el-dialog>
   </div>
-</template>
+</template>   
 <script>
 export default {
   name: "UserInfo",
@@ -260,18 +261,21 @@ export default {
   methods: {
     //得到用户的信息
     async getUserList() {
-      const data = await this.$http.get("Manager/GetUserInfoByQueryInfo", {
-        params: {
-          pageSize: this.queryInfo.pagesize,
-          pageIndex: this.queryInfo.pageIndex
+      const { data: res } = await this.$http.get(
+        "Manager/GetUserInfoByQueryInfo",
+        {
+          params: {
+            pageSize: this.queryInfo.pagesize,
+            pageIndex: this.queryInfo.pageIndex
+          }
         }
-      });
-      console.log(data);
-      if (data.status !== 200) {
+      );
+      console.log(res);
+      if (res.status !== 200) {
         return this.$message.error("获取用户列表失败！");
       }
-      this.userlist = data.data.pageData;
-      this.total = data.data.total;
+      this.userlist = res.data.pageData;
+      this.total = res.data.total;
     },
     // 监听 pagesize 改变的事件
     handleSizeChange(newSize) {
@@ -294,9 +298,12 @@ export default {
       this.$refs.addFormRef.validate(async valid => {
         if (!valid) return;
         // 可以发起添加用户的网络请求
-        const data = await this.$http.post("Manager/AddUserInfo", this.addForm);
-        console.log(data);
-        if (data.data !== true) {
+        const { data: res } = await this.$http.post(
+          "Manager/AddUserInfo",
+          this.addForm
+        );
+
+        if (res.status !== 200) {
           this.$message.error("添加用户失败！");
         }
 
@@ -309,18 +316,17 @@ export default {
     },
     // 展示编辑用户的对话框
     async showEditDialog(id) {
-      console.log(id);
-      const data = await this.$http.get("Manager/GetUserByUserId", {
+      const { data: res } = await this.$http.get("Manager/GetUserByUserId", {
         params: {
           userId: id
         }
       });
 
-      if (data.status !== 200) {
+      if (res.status !== 200) {
         return this.$message.error("查询用户信息失败！");
       }
 
-      this.editForm = data.data.userInfo;
+      this.editForm = res.data;
       this.editDialogVisible = true;
     },
     // 监听修改用户对话框的关闭事件
@@ -332,12 +338,12 @@ export default {
       this.$refs.editFormRef.validate(async valid => {
         if (!valid) return;
         // 发起修改用户信息的数据请求
-        const data = await this.$http.put(
+        const { data: res } = await this.$http.put(
           "Manager/UpdateUserInfo",
           this.editForm
         );
 
-        if (data.status !== 200) {
+        if (res.status !== 200) {
           return this.$message.error("更新用户信息失败！");
         }
 
@@ -369,13 +375,13 @@ export default {
         return this.$message.info("已取消删除");
       }
 
-      const data = await this.$http.delete("Manager/DeleteUserInfo",{
-        params:{
-          userId:id
+      const { data: res } = await this.$http.delete("Manager/DeleteUserInfo", {
+        params: {
+          userId: id
         }
       });
 
-      if (data.status !== 200) {
+      if (res.status !== 200) {
         return this.$message.error("删除用户失败！");
       }
 
@@ -387,8 +393,9 @@ export default {
       this.userInfo = userInfo;
 
       // 在展示对话框之前，获取所有角色的列表
-      const { data: res } = await this.$http.get("roles");
-      if (res.meta.status !== 200) {
+      const { data: res } = await this.$http.get("Manager/GetAllRoles");
+
+      if (res.status !== 200) {
         return this.$message.error("获取角色列表失败！");
       }
 
@@ -401,15 +408,16 @@ export default {
       if (!this.selectedRoleId) {
         return this.$message.error("请选择要分配的角色！");
       }
-
-      const { data: res } = await this.$http.put(
-        `users/${this.userInfo.id}/role`,
-        {
-          rid: this.selectedRoleId
-        }
+      var roleMenu_R = {
+        userId: this.userInfo.userId,
+        roleId: this.selectedRoleId
+      };
+      const { data: res } = await this.$http.post(
+        "Manager/SetUserRole",
+        roleMenu_R
       );
 
-      if (res.meta.status !== 200) {
+      if (res.status !== 200) {
         return this.$message.error("更新角色失败！");
       }
 

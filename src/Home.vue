@@ -80,10 +80,16 @@ export default {
               path: "UserInfo",
               pid: 101
             },
-             {
+            {
               id: 103,
               authName: "角色信息",
               path: "RoleInfo",
+              pid: 101
+            },
+            {
+              id: 102,
+              authName: "菜单信息",
+              path: "MenuInfo",
               pid: 101
             }
           ]
@@ -108,15 +114,13 @@ export default {
     },
     // 保存链接的激活状态
     saveNavState(activePath) {
-      window.sessionStorage.setItem('activePath', activePath)
-      this.activePath = activePath
+      window.sessionStorage.setItem("activePath", activePath);
+      this.activePath = activePath;
     }
   }
 };
 </script>
 <style lang="less" scoped>
-
-
 .home-container {
   height: 100%;
 }
@@ -138,7 +142,7 @@ export default {
 }
 
 .el-aside {
-   display: block;
+  display: block;
   left: 0;
   top: 70px;
   bottom: 0;

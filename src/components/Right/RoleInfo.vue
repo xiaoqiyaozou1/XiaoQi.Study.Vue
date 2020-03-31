@@ -73,12 +73,12 @@
               icon="el-icon-edit"
               @click="showUpdateDialog(scope.row.roleId)"
             >编辑</el-button>
-            <el-button 
-            size="mini"
-             type="danger" 
-             icon="el-icon-delete" 
+            <el-button
+              size="mini"
+              type="danger"
+              icon="el-icon-delete"
               @click="deleteRole(scope.row.roleId)"
-             >删除</el-button>
+            >删除</el-button>
             <el-button
               size="mini"
               type="warning"
@@ -112,7 +112,7 @@
         :data="rightslist"
         :props="treeProps"
         show-checkbox
-        node-key="id"
+        node-key="menuInfoId"
         default-expand-all
         :default-checked-keys="defKeys"
         ref="treeRef"
@@ -145,7 +145,12 @@
       </span>
     </el-dialog>
     <!--角色更新-->
-    <el-dialog title="角色更新" :visible="updateDialogVisible" width="50%" @close="updateRoleClosed">
+    <el-dialog
+      title="角色更新"
+      :visible.sync="updateDialogVisible"
+      width="50%"
+      @close="updateRoleClosed"
+    >
       <el-form :model="updateForm" :rules="addFormRules" ref="updateFormRef" label-width="90px">
         <el-form-item label="角色" prop="role">
           <el-input v-model="updateForm.role"></el-input>
@@ -212,9 +217,11 @@ export default {
       setRightDialogVisible: false,
       // 所有权限的数据
       rightslist: [],
+      //角色所拥有的权限
+      roleRights: {},
       // 树形控件的属性绑定对象
       treeProps: {
-        label: "authName",
+        label: "menuName",
         children: "children"
       },
       // 默认选中的节点Id值数组
@@ -227,21 +234,22 @@ export default {
     this.getRolesList();
   },
   methods: {
+
     // 获取所有角色的列表
     async getRolesList() {
-      const data = await this.$http.get("Manager/GetRoleInfos", {
+      const { data: res } = await this.$http.get("Manager/GetRoleInfos", {
         params: {
           pageSize: this.queryInfo.pagesize,
           pageIndex: this.queryInfo.pageIndex
         }
       });
-      console.log(data);
-      if (data.status !== 200) {
+      console.log(res);
+      if (res.status !== 200) {
         return this.$message.error("获取角色列表失败！");
       }
 
-      this.rolelist = data.data.roleData;
-      this.total = data.data.total;
+      this.rolelist = res.data.roleData;
+      this.total = res.data.total;
     },
 
     handleSizeChange(newSize) {
@@ -265,8 +273,11 @@ export default {
         if (!valid) return;
         console.log(this.addForm);
 
-        const data = await this.$http.post("Manager/AddRoleInfo", this.addForm);
-        if (data.data !== true) {
+        const { data: res } = await this.$http.post(
+          "Manager/AddRoleInfo",
+          this.addForm
+        );
+        if (res.status !== 200) {
           this.$message.error("添加角色失败！");
         }
 
@@ -284,17 +295,17 @@ export default {
     //打开数据更新窗口
     async showUpdateDialog(roleId) {
       console.log(roleId);
-      const data = await this.$http.get("Manager/GetRoleInfoById", {
+      const { data: res } = await this.$http.get("Manager/GetRoleInfoById", {
         params: {
           roleId: roleId
         }
       });
-      if (data.status !== 200) {
+      if (res.status !== 200) {
         this.$message.error("角色获取失败！");
         return;
       }
-      console.log(data);
-      this.updateForm = data.data;
+      console.log(res);
+      this.updateForm = res.data;
       this.updateDialogVisible = true;
     },
     //更新角色的方法
@@ -303,11 +314,11 @@ export default {
         if (!valid) return;
         console.log(this.updateForm);
 
-        const data = await this.$http.put(
+        const { data: res } = await this.$http.put(
           "Manager/UpdateRoleInfo",
           this.updateForm
         );
-        if (data.status !== 200) {
+        if (res.status !== 200) {
           this.$message.error("更新角色失败！");
           this.updateDialogVisible = false;
           return;
@@ -341,18 +352,16 @@ export default {
         return this.$message.info("取消了删除！");
       }
 
-
-      const data = await this.$http.delete("Manager/DeleteRoleInfo", {
+      const { data: res } = await this.$http.delete("Manager/DeleteRoleInfo", {
         params: { roleId: roleId }
       });
-      if (data.status !== 200) {
+      if (res.status !== 200) {
         return this.$message.error("删除权限失败！");
       }
 
       this.getRolesList();
-      
     },
-    // 根据Id删除对应的权限
+    // 根据Id删除对应的权限 有问题
     async removeRightById(role, rightId) {
       // 弹框提示用户是否要删除
       const confirmResult = await this.$confirm(
@@ -382,35 +391,47 @@ export default {
     },
     // 展示分配权限的对话框
     async showSetRightDialog(role) {
-      this.roleId = role.id;
-      // 获取所有权限的数据
-      const { data: res } = await this.$http.get("rights/tree");
+      this.roleId = role.roleId;
 
-      if (res.meta.status !== 200) {
+      //得到所有的权限树
+      const { data: res } = await this.$http.get("Manager/GetMenuTree");
+
+      if (res.status !== 200) {
         return this.$message.error("获取权限数据失败！");
       }
 
       // 把获取到的权限数据保存到 data 中
       this.rightslist = res.data;
-      console.log(this.rightslist);
 
-      // 递归获取三级节点的Id
-      this.getLeafKeys(role, this.defKeys);
+      var { data: menuInfos } = await this.$http.get(
+        "Manager/GetRoleMenusByRoleId",
+        {
+          params: {
+            roleId: this.roleId
+          }
+        }
+      );
 
+      this.getLeafKeys(menuInfos.data);
+      // this.test();
       this.setRightDialogVisible = true;
     },
-    // 通过递归的形式，获取角色下所有三级权限的id，并保存到 defKeys 数组中
-    getLeafKeys(node, arr) {
-      // 如果当前 node 节点不包含 children 属性，则是三级节点
-      if (!node.children) {
-        return arr.push(node.id);
-      }
 
-      node.children.forEach(item => this.getLeafKeys(item, arr));
+    getLeafKeys(node) {
+      this.defKeys = [];
+      if (node !== null) {
+        node.forEach(item => {
+          if (item.fatherId !== "0") {
+            this.defKeys.push(item.menuInfoId);
+          }
+        });
+      }
     },
     // 监听分配权限对话框的关闭事件
     setRightDialogClosed() {
-      this.defKeys = [];
+      this.defKeys.splice(0, this.defKeys.length);
+      //this.defKeys = [];
+      console.log(this.defKeys);
     },
     // 点击为角色分配权限
     async allotRights() {
@@ -421,17 +442,24 @@ export default {
 
       const idStr = keys.join(",");
 
-      const { data: res } = await this.$http.post(
-        `roles/${this.roleId}/rights`,
-        { rids: idStr }
-      );
+      console.log(idStr);
+      var roleId = this.roleId;
+      var roleMenu = {
+        roleId: roleId,
+        menuInfoId: idStr
+      };
 
-      if (res.meta.status !== 200) {
+      const { data: res } = await this.$http.post(
+        "Manager/SetRoleMenu",
+        roleMenu
+      );
+      console.log(res);
+      if (res.status !== 200) {
         return this.$message.error("分配权限失败！");
       }
 
       this.$message.success("分配权限成功！");
-      this.getRolesList();
+      // this.getRolesList();
       this.setRightDialogVisible = false;
     }
   }
