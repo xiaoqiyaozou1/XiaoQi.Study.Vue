@@ -4,7 +4,7 @@
     <el-header>
       <div>
         <img src="./assets/logo.png" alt />
-        <span>用户管理系统</span>
+        <span>XiaoQi.Study</span>
       </div>
       <el-button type="info" @click="logout">退出</el-button>
     </el-header>

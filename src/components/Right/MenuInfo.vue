@@ -40,6 +40,18 @@
       </el-table-column>
       <!-- <el-table-column label="等级" prop></el-table-column> -->
     </el-table>
+    <el-card>
+         <!-- 分页区域 -->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="queryInfo.pagenum"
+        :page-sizes="[1, 2, 5, 10]"
+        :page-size="queryInfo.pagesize"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+      ></el-pagination>
+    </el-card>
 
     <el-dialog title="添加菜单" :visible.sync="addDialogVisible" width="50%" @close="addDialogClosed">
       <el-form :model="addMenuForm" ref="addFormRef" label-width="90px">
@@ -103,7 +115,14 @@
 <script>
 export default {
   data() {
-    return {
+    return {  
+        queryInfo: {
+        query: "",
+        // 当前的页数
+        pageIndex: 1,
+        // 当前每页显示多少条数据
+        pagesize: 5
+      },
       menuList: [],
       addList: {},
       updateList: {},
@@ -125,8 +144,24 @@ export default {
     this.getMenuInfo();
   },
   methods: {
+        // 监听 页码值 改变的事件
+    handleCurrentChange(newPage) {
+      console.log(newPage);
+      this.queryInfo.pageIndex = newPage;
+      this.getMenuInfo();
+    },
+       handleSizeChange(newSize) {
+      // console.log(newSize)
+      this.queryInfo.pagesize = newSize;
+      this.getMenuInfo();
+    },
     async getMenuInfo() {
-      const {data:res} = await this.$http.get("Manager/GetAllMenu");
+      const {data:res} = await this.$http.get("Manager/GetMenusByQueryInfo",{   
+          params: {
+            pageSize: this.queryInfo.pagesize,
+            pageIndex: this.queryInfo.pageIndex
+          }
+        });
 
       console.log(res);
       if (res.status !== 200) {
